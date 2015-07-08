@@ -1,0 +1,15 @@
+{
+    "name": "mervyn/nest-php",
+    "description": "php nest api",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "mervyn wang",
+            "email": "alpe.g2@gmail.com"
+        }
+    ],
+    "minimum-stability": "beta",
+    "require": {
+        "guzzlehttp/guzzle": "~5.0"
+    }
+}
