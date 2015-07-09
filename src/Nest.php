@@ -41,7 +41,7 @@ Class Api {
      * [SetAuth description]
      * @param [type] $access_token [description]
      */
-    public function SetAuth($access_token)
+    public function setAuth($access_token)
     {
         $this->access_token = $access_token;
         return $this;
@@ -60,7 +60,7 @@ Class Api {
         if ($header) {
             header('Location: "'.$url.'"');
         } else {
-            echo '<html><META http-equiv="refresh" content="0;URL='.urlencode($url).'"></html>'
+            echo '<html><META http-equiv="refresh" content="0;URL='.urlencode($url).'"></html>';
         }
         die();
     }
@@ -110,28 +110,26 @@ Class Api {
      */
     private function httpClient($url, $steam = false, $method = 'get', $body = false)
     {
-        $http = new GuzzleHttp\Client();
-        try{
-            if($steam) {
-                $header = ['Accept' => 'application/json', 'Accept' => 'text/event-stream'];
-            } else {
-                $header = ['Accept' => 'application/json'];
-            }
 
-            $option = ['headers' => $header, 'verify' => $this->_main, 'stream' => $stream];
+        $http = new \GuzzleHttp\Client();
+        try{
+
+            $header = ['Accept' => ($steam? 'text/event-stream' : 'application/json') ];
+            $option = ['headers' => $header, 'verify' => $this->_main, 'stream' => $steam];
 
             if($body) {
                 $option['body'] = $body;
             }
 
             $url = $this->_url . $url . '?auth='. $this->access_token;
-            $res = $http->$method($url, [
-                'headers' => ,
-                'verify' => $this->_main
-                ], [] );
+
+            $res = $http->$method($url, $option, []);
 
         }  catch (Exception $e) {
-            throw new Exception("Error Processing Request", 1);
+            echo $url;
+            restore_exception_handler();
+            die();
+            //throw new Exception("$url error\n", 1);
         }
 
         return $res;
@@ -176,53 +174,53 @@ Class Api {
     {
 
         $base = false;
-
-        $http = new GuzzleHttp\Client();
         try{
-            $res = $http->get('', [
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Accept' => 'text/event-stream'
-                ],
-                'stream' => true,
-                'verify' => false], [] );
-            $body = $res->getBody();
-
-
-            $str = '';
-            while (!$body->eof()) {
-                $str .= $body->read(8192);
-                if(strpos($str, 'event: put') !== false) {
-                    $cmd = substr($str, strpos($str, 'data:') + 5);
-                    $str = "";
-
-                    $data = json_decode($cmd, true);
-                    $change = [];
-
-                    if(!$base) {
-                        $change['device']   = $data['data']['device'];
-                        $change['stucture'] = $data['data']['stucture'];
-                    } else {
-                        // diff;
-                        $tmp = [];
-                        $tmp['device']   = $data['data']['device'];
-                        $tmp['stucture'] = $data['data']['stucture'];
-
-                        $change['device']   = array_diff($change['device'], $tmp['device']);
-                        $change['stucture'] = array_diff($change['stucture'], $tmp['stucture']);
-                    }
-
-                    if(!empty($func) &&  function_exists($func)) {
-                        call_user_func_array($func, [$data, $change]);
-                    }
-
-                } else {
-                    continue;
-                }
-            }
-        }  catch (Exception $e) {
-            throw new Exception("Error Processing Request", 1);
+            $respond = $this->httpClient('devices/', true);
+            // $body = $respond->getBody();
+        } catch (Exception $e) {
+            echo 'aaa';
+            restore_exception_handler();
         }
+
+
+        $str = '';
+        $index = 1;
+        while (!$respond->feof()) {
+            echo "\n$index \n";
+            $str .= $respond->readLine();
+
+            if(strpos($str, 'event: put') !== false) {
+                $cmd = substr($str, strpos($str, 'data:') + 5);
+                $str = "";
+
+                $data = json_decode($cmd, true);
+                $change = [];
+
+                if(!$base) {
+                    $change['devices']   = $data['data']['devices'];
+                    $change['structures'] = $data['data']['structures'];
+                } else {
+                    // diff;
+                    $tmp = [];
+                    $tmp['devices']   = $data['data']['devices'];
+                    $tmp['structures'] = $data['data']['structuress'];
+
+                    $change['devices']   = array_diff($change['devices'], $tmp['devices']);
+                    $change['structures'] = array_diff($change['structures'], $tmp['structures']);
+                }
+
+                if(is_callable($func)) {
+                    echo "run func";
+                    call_user_func_array($func, [$data, $change, $index]);
+                }
+
+                $index++;
+            } else {
+                echo $str;
+                continue;
+            }
+        }
+
     }
 
     /**

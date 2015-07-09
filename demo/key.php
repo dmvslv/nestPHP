@@ -3,8 +3,8 @@
  *
  */
 
-define('CLIENTID', '');
-define('CLIENTSEC', '');
+define('NEST_CLIEND_ID', '');
+define('NEST_CLIEND_SECRET', '');
 
 
 ?>
