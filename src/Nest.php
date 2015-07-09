@@ -169,11 +169,13 @@ Class Api {
 
     /**
      * [listener description]
+     * @param  string $func  func;
      * @return [type] [description]
      */
-    public function listener()
+    public function listener($func = '')
     {
-        $url = '';
+
+        $base = false;
 
         $http = new GuzzleHttp\Client();
         try{
@@ -194,14 +196,32 @@ Class Api {
                     $cmd = substr($str, strpos($str, 'data:') + 5);
                     $str = "";
 
+                    $data = json_decode($cmd, true);
+                    $change = [];
 
+                    if(!$base) {
+                        $change['device']   = $data['data']['device'];
+                        $change['stucture'] = $data['data']['stucture'];
+                    } else {
+                        // diff;
+                        $tmp = [];
+                        $tmp['device']   = $data['data']['device'];
+                        $tmp['stucture'] = $data['data']['stucture'];
+
+                        $change['device']   = array_diff($change['device'], $tmp['device']);
+                        $change['stucture'] = array_diff($change['stucture'], $tmp['stucture']);
+                    }
+
+                    if(!empty($func) &&  function_exists($func)) {
+                        call_user_func_array($func, [$data, $change]);
+                    }
 
                 } else {
                     continue;
                 }
             }
         }  catch (Exception $e) {
-            var_dump($e->getMessage());
+            throw new Exception("Error Processing Request", 1);
         }
     }
 
