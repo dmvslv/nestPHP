@@ -22,7 +22,6 @@ Class Api {
         if(!defined('NEST_CLIEND_ID') || !defined('NEST_CLIEND_SECRET') ) {
             throw new Exception("set client_id & secret", 1);
         }
-
     }
 
     /**
@@ -34,6 +33,8 @@ Class Api {
     {
         $this->_url  = $site? self::mainUrl : self::betaUrl;
         $this->_main = $site? true : false;
+
+        self::init();
     }
 
     /**
@@ -66,10 +67,12 @@ Class Api {
 
     /**
      * [getAuh description]
-     * @return [type] [description]
+     *
+     * @return string access_token
      */
-    public static function getAuh()
+    public static function getAccessCode()
     {
+        self::init();
         $code = $_GET['code'];
         if(empty($code)) {
             throw new Exception("Error Processing Request", 1);
@@ -86,11 +89,11 @@ Class Api {
         try{
             $http = new GuzzleHttp\Client();
             $res = $http->post($url, [], ['timeout' => 2, 'connect_timeout' => 2]);
-
             $data = $res->JSON();
             $access_token = $data->access_token;
         } catch (Exception $e) {
             restore_exception_handler();
+            return false;
         }
 
         return $access_token;
@@ -148,7 +151,7 @@ Class Api {
      * [getStucture description]
      * @return [type] [description]
      */
-    public function getStucture()
+    public function getStuctureOnce()
     {
         $res = $this->httpClient('structure/');
         return $res->JSON();
@@ -158,11 +161,10 @@ Class Api {
      * [getDevice description]
      * @return [type] [description]
      */
-    public function getDevice()
+    public function getDeviceOnce()
     {
         $res = $this->httpClient('device/');
         return $res->JSON();
-
     }
 
     /**
