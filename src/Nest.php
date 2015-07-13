@@ -176,18 +176,35 @@ Class Api {
         $base = false;
         try{
             $respond = $this->httpClient('devices/', true);
-            // $body = $respond->getBody();
+            $body = $respond->getBody();
+            // var_dump($respond);die();
         } catch (Exception $e) {
             echo 'aaa';
             restore_exception_handler();
         }
 
 
-        $str = '';
+
         $index = 1;
-        while (!$respond->feof()) {
-            echo "\n$index \n";
-            $str .= $respond->readLine();
+        $str = '';
+        while (!$body->eof()) {
+            $c = $p = true;
+
+            while($c && !$body->eof() ) {
+                if(($c == "\n") && ($p == "\n")) {
+                    break;
+                } else {
+                    $str .= $c;
+                    $p = $c;
+                }
+                $c = $body->read(1);
+            }
+
+            echo "\n$index : \n";
+            $index++;
+
+
+            continue;
 
             if(strpos($str, 'event: put') !== false) {
                 $cmd = substr($str, strpos($str, 'data:') + 5);

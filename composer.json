@@ -8,6 +8,11 @@
             "email": "alpe.g2@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "Nest\\": "src/"
+        }
+    },
     "minimum-stability": "beta",
     "require": {
         "guzzlehttp/guzzle": "~5.0"
