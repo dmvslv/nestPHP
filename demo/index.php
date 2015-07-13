@@ -12,13 +12,12 @@ $access = 'c.Th98wHpqCrrJEGAbJEE5GtBmsgbLlPxeC6PQYz0hWrvnySN2m2ybnpU8FshYuR1xunf
 
 $nest = new \Nest\Api(0, 1);
 $nest->setAuth($access)->listener(function($whole, $change, $index) use ($nest) {
-    echo "\n\n\n $index . change \n";
-    if($index > 1) {
+    if($index == 1) {
+        echo "\ninit\n";
         var_dump($change);
     } else {
-        echo "\ninit\n";
+        var_dump($change);
     }
-
 
 });
 

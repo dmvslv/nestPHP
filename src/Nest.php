@@ -12,6 +12,8 @@ Class Api {
     private $_url = '';
     private $_main = false;
 
+    private $_debug = false;
+    private $_logFunc = false;
 
     /**
      * check client_Id & client_Secret
@@ -24,6 +26,7 @@ Class Api {
         }
     }
 
+
     /**
      *
      * @param integer $site  [description]
@@ -33,6 +36,7 @@ Class Api {
     {
         $this->_url  = $site? self::mainUrl : self::betaUrl;
         $this->_main = $site? true : false;
+        $this->_debud = $debug? true : false;
 
         self::init();
     }
@@ -44,6 +48,19 @@ Class Api {
     public function setAuth($access_token)
     {
         $this->access_token = $access_token;
+        return $this;
+    }
+
+    /**
+     * set log debug info (method, tag, log)
+     *
+     * @param object $func [description]
+     */
+    public function setLogFunc($func)
+    {
+        if(is_callable($func)) {
+            $this->_logFunc = $func;
+        }
         return $this;
     }
 
@@ -123,6 +140,8 @@ Class Api {
 
             $url = $this->_url . $url . '?auth='. $this->access_token;
 
+            if($debug) $this->log(__METHOD__, $url);
+
             $res = $http->$method($url, $option, []);
 
         }  catch (Exception $e) {
@@ -133,6 +152,12 @@ Class Api {
         }
 
         return $res;
+    }
+
+    private function log($method, $log)
+    {
+
+        return true;
     }
 
     /**
@@ -175,23 +200,22 @@ Class Api {
 
         $base = false;
         try{
-            $respond = $this->httpClient('devices/', true);
+            $respond = $this->httpClient('', true);
             $body = $respond->getBody();
-            // var_dump($respond);die();
         } catch (Exception $e) {
-            echo 'aaa';
             restore_exception_handler();
         }
-
-
 
         $index = 1;
         $str = '';
         while (!$body->eof()) {
             $c = $p = true;
+            $cmd = '';
 
-            while($c && !$body->eof() ) {
-                if(($c == "\n") && ($p == "\n")) {
+            while( $cmd == '' ) {
+                if(($c === "\n") && ($p === "\n")) {
+                    $cmd = $str;
+                    $str = '';
                     break;
                 } else {
                     $str .= $c;
@@ -200,17 +224,15 @@ Class Api {
                 $c = $body->read(1);
             }
 
-            echo "\n$index : \n";
-            $index++;
-
-
-            continue;
-
-            if(strpos($str, 'event: put') !== false) {
-                $cmd = substr($str, strpos($str, 'data:') + 5);
-                $str = "";
-
+            if(strpos($cmd, 'event: put') !== false) {
+                $cmd = substr($cmd, strpos($cmd, 'data:') + 5);
                 $data = json_decode($cmd, true);
+                if(!$data) {
+                    echo $cmd;
+                    continue;
+                }
+                $cmd = "";
+
                 $change = [];
 
                 if(!$base) {
@@ -224,6 +246,12 @@ Class Api {
 
                     $change['devices']   = array_diff($change['devices'], $tmp['devices']);
                     $change['structures'] = array_diff($change['structures'], $tmp['structures']);
+                }
+
+                if(count($change['structures'])) {
+                    foreach ($change['structures'] as &$row) {
+                        unset($row['wheres']);
+                    }
                 }
 
                 if(is_callable($func)) {
