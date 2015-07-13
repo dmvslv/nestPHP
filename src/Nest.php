@@ -154,6 +154,13 @@ Class Api {
         return $res;
     }
 
+    /**
+     * write log ;
+     *
+     * @param  string $method [description]
+     * @param  string $log    [description]
+     * @return true
+     */
     private function log($method, $log)
     {
 
@@ -161,8 +168,9 @@ Class Api {
     }
 
     /**
-     * [getAll description]
-     * @return [type] [description]
+     * get All Data
+     *
+     * @return json
      */
     public function getAll()
     {
@@ -171,8 +179,9 @@ Class Api {
     }
 
     /**
-     * [getStucture description]
-     * @return [type] [description]
+     * get Stucture Data Once
+     *
+     * @return json
      */
     public function getStuctureOnce()
     {
@@ -181,8 +190,9 @@ Class Api {
     }
 
     /**
-     * [getDevice description]
-     * @return [type] [description]
+     * get Device Data Once
+     *
+     * @return json
      */
     public function getDeviceOnce()
     {
@@ -193,7 +203,7 @@ Class Api {
     /**
      * [listener description]
      * @param  string $func  func;
-     * @return [type] [description]
+     * @return void
      */
     public function listener($func = '')
     {
@@ -228,11 +238,11 @@ Class Api {
                 $cmd = substr($cmd, strpos($cmd, 'data:') + 5);
                 $data = json_decode($cmd, true);
                 if(!$data) {
-                    echo $cmd;
+                    if($this->_debug) $this->log(__METHOD__, $cmd);
                     continue;
                 }
-                $cmd = "";
 
+                $cmd = "";
                 $change = [];
 
                 if(!$base) {
@@ -255,23 +265,21 @@ Class Api {
                 }
 
                 if(is_callable($func)) {
-                    echo "run func";
+                    if($this->_debug) $this->log(__METHOD__, 'run callback');
                     call_user_func_array($func, [$data, $change, $index]);
                 }
 
                 $index++;
-            } else {
-                echo $str;
-                continue;
             }
         }
 
     }
 
     /**
-     * [set description]
-     * @param [type] $path [description]
-     * @param [type] $var  [description]
+     * rest put;
+     *
+     * @param string $path [description]
+     * @param json   $var  [description]
      */
     public function set($path, $var)
     {
@@ -279,6 +287,27 @@ Class Api {
         return $respond->getHeader();
     }
 
+    /**
+     * [setDevice description]
+     *
+     * @param string $deivceId [description]
+     * @param json   $var      [description]
+     */
+    public function setDevice($deivceId, $var)
+    {
+        return $this->set('/devices/'.$deivceId, $var);
+    }
+
+    /**
+     * [setStructure description]
+     *
+     * @param string $sId [description]
+     * @param json   $var [description]
+     */
+    public function setStructure($sId, $var)
+    {
+        return $this->set('/structures/'.$deivceId, $var);
+    }
 
 }
 
